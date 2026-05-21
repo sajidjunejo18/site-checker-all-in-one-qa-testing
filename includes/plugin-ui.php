@@ -4,6 +4,30 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Copy premium images into free plugin assets if available (runs on admin init)
+add_action('admin_init', function() {
+    $premium_base = WP_CONTENT_DIR . '/plugins/site-checker-premium-agency-yearly/includes/assets/';
+    $free_images_dir = plugin_dir_path(__FILE__) . '../assets/images/';
+
+    if ( ! is_dir( $free_images_dir ) ) {
+        wp_mkdir_p( $free_images_dir );
+    }
+
+    $files_to_copy = [
+        'visual-regression.png',
+        'automation.png'
+    ];
+
+    foreach ( $files_to_copy as $f ) {
+        $src = $premium_base . $f;
+        $dest = $free_images_dir . $f;
+        if ( file_exists( $src ) && ! file_exists( $dest ) ) {
+            // Use @ to suppress warnings for permission issues
+            @copy( $src, $dest );
+        }
+    }
+});
+
 // Add admin menu
 function sitechal_add_admin_menu()
 {
@@ -78,6 +102,35 @@ function sitechal_add_admin_menu()
         'manage_options',
         'sitechal-go-premium',
         'sitechal_go_premium_page'  // must exist
+    );
+
+    // UI Checks (mirror premium menu structure so sub-items appear on hover)
+    add_submenu_page(
+        'site-checker-all-in-one-qa-testing',
+        'UI Checks',
+        'UI Checks',
+        'manage_options',
+        'wpsc_render_page',
+        'wpsc_render_page'
+    );
+
+    // Sub-items (will appear under UI Checks on hover)
+    add_submenu_page(
+        'site-checker-all-in-one-qa-testing',
+        'Visual Regression Test',
+        'Visual Regression Test',
+        'manage_options',
+        'wpsc-visual-regression',
+        'sitechal_visual_regression_page'
+    );
+
+    add_submenu_page(
+        'site-checker-all-in-one-qa-testing',
+        'Responsive Test',
+        'Responsive Test',
+        'manage_options',
+        'wpsc-responsive-test',
+        'sitechal_responsive_test_page'
     );
 }
 
@@ -202,6 +255,160 @@ function sitechal_wordpress_checks_page()
     </div>
 <?php
 }
+
+// UI Checks Page (two tabs: Visual Regression, Responsive Test)
+// Redirect callbacks for visual/regressive submenu links
+function sitechal_visual_regression_page() {
+    $_GET['tab'] = 'home';
+    wpsc_render_page();
+}
+
+function sitechal_responsive_test_page() {
+    $_GET['tab'] = 'responsive-test';
+    wpsc_render_page();
+}
+
+// UI Checks renderer (mirrors premium layout: no sidebar, two tabs, premium overlay)
+function wpsc_render_page() {
+    // For free version assume not premium
+    $is_premium = false;
+
+    // Allowed tabs
+    $allowed_tabs = ['home', 'responsive-test'];
+    $tab = 'home';
+
+    if (isset($_GET['tab']) && in_array(sanitize_key($_GET['tab']), $allowed_tabs, true)) {
+        $tab = sanitize_key($_GET['tab']);
+    } else {
+        // Support direct submenu slugs
+        $page = isset($_GET['page']) ? sanitize_text_field($_GET['page']) : '';
+        if ($page === 'wpsc-visual-regression') {
+            $tab = 'home';
+        } elseif ($page === 'wpsc-responsive-test') {
+            $tab = 'responsive-test';
+        }
+    }
+
+    // Prefer local copy (copied from premium) if available, otherwise fall back to premium plugin path
+    $local_bg = plugin_dir_path(__FILE__) . '../assets/images/visual-regression.png';
+    if ( file_exists( $local_bg ) ) {
+        $bg_img = esc_url( plugin_dir_url( __FILE__ ) . '../assets/images/visual-regression.png' );
+    } else {
+        $bg_img = esc_url( content_url('plugins/site-checker-premium-agency-yearly/includes/assets/visual-regression.png') );
+    }
+
+    ?>
+    <div class="mainQaaContainer visualRegressionTestPage responsiveWebTest">
+
+        <?php if ( ! $is_premium ) : ?>
+            <div style="flex:1; padding: 20px; position:relative;">
+                <div class="premiumDev">
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=sitechal-wordpress-license')); ?>" class="premiumIconContain">
+                        <div class="Icon"></div>
+                        <p><?php esc_html_e('Activate License', 'site-checker-all-in-one-qa-testing'); ?></p>
+                    </a>
+                </div>
+                <img src="<?php echo $bg_img; ?>" alt="Visual Regression" style="max-width:100%;width:100%; height:auto; filter: blur(2px);" />
+            </div>
+        <?php else: ?>
+            <div class="wrap visualDiffPage pt-40 pl-50 shadow" id="wpsc-wrap">
+                <h1 class="text-40">Visual Regression Test</h1>
+                <p class="fade-text">Upload your design and compare it with your live pages.</p>
+            </div>
+        <?php endif; ?>
+
+    </div>
+    <?php
+}
+
+// Create a dedicated flyout for the UI Checks submenu items and keep the rest of the Site Checker menu intact
+add_action('admin_footer', function() {
+    ?>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            var adminMenu = document.getElementById('adminmenu');
+            if (!adminMenu) return;
+
+            var uiChecksLink = adminMenu.querySelector('a[href*="page=wpsc_render_page"]');
+            var visLink = adminMenu.querySelector('a[href*="page=wpsc-visual-regression"]');
+            var respLink = adminMenu.querySelector('a[href*="page=wpsc-responsive-test"]');
+            if (!uiChecksLink || !visLink || !respLink) return;
+
+            var uiChecksLi = uiChecksLink.closest('li');
+            var visLi = visLink.closest('li');
+            var respLi = respLink.closest('li');
+            if (!uiChecksLi || !visLi || !respLi) return;
+
+            // Hide the two submenu items from the default Site Checker list
+            visLi.style.display = 'none';
+            respLi.style.display = 'none';
+
+            // Create flyout container for UI Checks
+            var flyout = document.createElement('div');
+            flyout.className = 'wpsc-ui-checks-flyout';
+            flyout.style.display = 'none';
+            flyout.style.position = 'absolute';
+            flyout.style.top = '0';
+            flyout.style.left = '100%';
+            flyout.style.background = '#23282d';
+            flyout.style.padding = '8px 0';
+            flyout.style.border = '1px solid rgba(0,0,0,0.15)';
+            flyout.style.boxShadow = '0 6px 12px rgba(0,0,0,0.2)';
+            flyout.style.zIndex = 9999;
+            flyout.style.minWidth = '180px';
+            flyout.style.whiteSpace = 'nowrap';
+
+            // Clone links for the flyout, preserving href and text
+            function addFlyoutItem(link) {
+                var clone = link.cloneNode(true);
+                clone.removeAttribute('href');
+                clone.style.display = 'block';
+                clone.style.padding = '8px 16px';
+                clone.style.color = '#fff';
+                clone.style.width = '100%';
+                clone.style.boxSizing = 'border-box';
+                clone.style.textDecoration = 'none';
+                clone.style.cursor = 'pointer';
+                clone.addEventListener('click', function() {
+                    window.location.href = link.href;
+                });
+
+                var item = document.createElement('div');
+                item.className = 'wpsc-ui-checks-flyout-item';
+                item.style.padding = '0';
+                item.appendChild(clone);
+                flyout.appendChild(item);
+            }
+
+            addFlyoutItem(visLink);
+            addFlyoutItem(respLink);
+
+            uiChecksLi.style.position = 'relative';
+            uiChecksLi.appendChild(flyout);
+
+            uiChecksLi.addEventListener('mouseenter', function() {
+                flyout.style.display = 'block';
+            });
+            uiChecksLi.addEventListener('mouseleave', function() {
+                flyout.style.display = 'none';
+            });
+
+            // Keep flyout visible while hovering it directly
+            flyout.addEventListener('mouseenter', function() {
+                flyout.style.display = 'block';
+            });
+            flyout.addEventListener('mouseleave', function() {
+                flyout.style.display = 'none';
+            });
+
+        } catch (e) {
+            console && console.log && console.log(e);
+        }
+    });
+    </script>
+    <?php
+}, 100);
 
 // General Checks Page
 function sitechal_general_checks_page()

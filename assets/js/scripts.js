@@ -1924,6 +1924,48 @@ document.addEventListener('DOMContentLoaded', function () {
       parent.classList.toggle('active');
     });
   });
+
+  const fixButtons = document.querySelectorAll('.site-health-fix-btn');
+  fixButtons.forEach(button => {
+    button.addEventListener('click', function (event) {
+      event.stopPropagation();
+      event.preventDefault();
+      showSiteHealthFixPopup();
+    });
+  });
+
+  function showSiteHealthFixPopup() {
+    if (document.getElementById('site-health-fix-popup-overlay')) {
+      return;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.id = 'site-health-fix-popup-overlay';
+    overlay.className = 'site-health-fix-popup-overlay';
+
+    const popup = document.createElement('div');
+    popup.className = 'site-health-fix-popup';
+
+    const closeButton = document.createElement('button');
+    closeButton.className = 'close-popup';
+    closeButton.type = 'button';
+    closeButton.textContent = '×';
+    closeButton.addEventListener('click', function () {
+      overlay.remove();
+    });
+
+    const heading = document.createElement('h2');
+    heading.textContent = 'How to Fix';
+
+    const paragraph = document.createElement('p');
+    paragraph.textContent = 'This popup can be replaced with a full fix guide by the UI developer. For now, it shows example guidance text in a modal overlay.';
+
+    popup.appendChild(closeButton);
+    popup.appendChild(heading);
+    popup.appendChild(paragraph);
+    overlay.appendChild(popup);
+    document.body.appendChild(overlay);
+  }
 });
 
 // Automation Start

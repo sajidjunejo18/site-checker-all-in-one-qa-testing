@@ -333,6 +333,24 @@ h1.mainTitle{padding: 20px 0px 0px; font-weight: 400; font-size: 30px;}
 .textBlurb .blurbContent p{margin: 0px; font-size: 14px;color: #39465F;}
 .blurbIcon:hover + .blurbContent { opacity: 1; visibility: visible; }
 
+/* UI Checks flyout menu */
+.wpsc-ui-checks-flyout {
+    min-width: 180px;
+    white-space: nowrap;
+}
+.wpsc-ui-checks-flyout-item {
+    display: block;
+}
+.wpsc-ui-checks-flyout-item a {
+    display: block;
+    padding: 8px 16px;
+    color: #fff;
+    text-decoration: none;
+}
+.wpsc-ui-checks-flyout-item a:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
 /* QA Automation Main Dashboard */
 .autoMain .mainContainer{background: #fff; padding: 40px 22px 40px 75px;}
 .autoMain .mainContainer .content{ display: flex;}
@@ -403,7 +421,16 @@ h1.mainTitle{padding: 20px 0px 0px; font-weight: 400; font-size: 30px;}
 .accTabs .accTitle::before{content: "";width: 24px;height: 24px;background: red;position: absolute;top: 50%; left: 55px; transform: translate(0px, -50%);}
 .accTabs .accTitle::after{content: "";width: 15px; height: 10px; background: url(../arw.svg) no-repeat center / contain; position: absolute; top: 50%; right: 54px; transform: translate(0px, -50%);}
 .accTabs.active .accTitle::after{transform: translate(0px, -50%) rotate(180deg);}
-.accTabs.critical .accTitle{background: #FFEAEA; color: var(--base-color);}
+.accTabs.critical .accTitle{background: #FFEAEA; color: var(--base-color); display: flex; align-items: center; justify-content: flex-start; gap: 18px; padding: 15px 90px 15px 90px;}
+.accTabs.critical .accTitle strong{flex: 0 1 auto; margin: 0;}
+.accTabs.critical .site-health-fix-btn{background: transparent; border: 0; border-radius: 0; color: #133078; font-size: 14px; font-weight: 600; padding: 0; text-decoration: underline; margin: 0; cursor: pointer; line-height: 1;}
+.accTabs.critical .site-health-fix-btn:hover{background: transparent; color: #133078; text-decoration: underline;}
+
+.site-health-fix-popup-overlay{position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 99999;}
+.site-health-fix-popup{background: #ffffff; border-radius: 14px; padding: 24px; max-width: 520px; width: calc(100% - 40px); box-shadow: 0 20px 60px rgba(0,0,0,0.16); position: relative;}
+.site-health-fix-popup h2{margin: 0 0 12px; font-size: 20px; color: #133078;}
+.site-health-fix-popup p{margin: 0; color: #39465F; line-height: 1.6; font-size: 15px;}
+.site-health-fix-popup .close-popup{position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; border-radius: 50%; border: none; background: #f3f3f3; color: #39465F; font-size: 18px; line-height: 1; cursor: pointer;}
 .accTabs.critical .accTitle::before{background: url(../Critical-Icon.svg)no-repeat center/contain;}
 .accTabs.recommended .accTitle{background: #FFF6EA; color:#FFAA33;}
 .accTabs.recommended .accTitle::before{background: url(../Recommended-Icon.svg)no-repeat center/contain;}
@@ -1647,6 +1674,48 @@ padding-top: 0;
 .wp-site-checker-promo a:hover {
     background: rgba(255,255,255,0.35);
 }
+
+/* UI Checks - blurred background + premium overlay */
+.ui-checks-container .ui-checks-bg{
+    position: absolute;
+    inset: 0 0 0 315px; /* leave space for the sidebar */
+    background-size: cover;
+    background-position: center center;
+    filter: blur(8px) brightness(0.6);
+    transform: scale(1.02);
+    z-index: 1;
+    min-height: 500px;
+}
+.ui-checks-container .premium-overlay{
+    position: absolute;
+    inset: 0 0 0 315px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    pointer-events: none;
+}
+.ui-checks-container .premium-overlay .premium-content{
+    pointer-events: auto;
+    background: rgba(255,255,255,0.95);
+    border-radius: 8px;
+    padding: 28px 36px;
+    text-align: center;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.15);
+    max-width: 640px;
+}
+.ui-checks-container .premium-overlay .premium-content h2{margin:0 0 10px; font-size: 22px;}
+.ui-checks-container .premium-overlay .premium-content p{color:#39465F; margin:0 0 18px}
+.ui-checks-container .premium-overlay .premium-content .button{pointer-events: auto}
+
+/* Ensure sidebar and content stacking */
+.ui-checks-container .sideBar{position:relative; z-index: 3}
+.ui-checks-container .tableContentQaa{position:relative; z-index: 2;}
+
+/* Visual Regression page adjustments: hide left sidebar and use full-width content */
+.visualRegressionTestPage .sideBar { display: none !important; }
+.visualRegressionTestPage .tableContentQaa, .visualRegressionTestPage > div { width: 100% !important; min-width: 0 !important; }
+.visualRegressionTestPage img { max-width: 100%; height: auto; display: block; }
 
  /* Premium Popup Overlay */
 .premium-popup-overlay {

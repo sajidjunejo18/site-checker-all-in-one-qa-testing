@@ -209,8 +209,15 @@ function sitechal_print_issues($title, $items) {
 
     $count = count($items);
     $item_label = ($count === 1) ? 'Item' : 'Items';
-    
-    echo '<h4 class="general-result accTitle"><strong>' . esc_html($count . ' ' . $item_label . ' with status ' . strtoupper($title)) . '</strong></h4>';
+
+    $title_text = esc_html($count . ' ' . $item_label . ' with status ' . strtoupper($title));
+    $button_html = '';
+
+    if ($class_name === 'critical') {
+        $button_html = '<button type="button" class="site-health-fix-btn">' . esc_html__('How to Fix?', 'site-checker-all-in-one-qa-testing') . '</button>';
+    }
+
+    echo '<h4 class="general-result accTitle"><strong>' . $title_text . '</strong>' . $button_html . '</h4>';
     echo '<div class="siteHAcc">';
     if (!empty($items)) {
         foreach ($items as $issue) {
